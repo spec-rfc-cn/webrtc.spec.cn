@@ -2,7 +2,7 @@
 
 ![markdownlint](https://github.com/spec-rfc-cn/webrtc.spec.cn/workflows/markdownlint-lint/badge.svg)
 
-用中文来记录对webrtc spec的理解
+用中文来记录对webrtc spec的理解,[website](https://spec-rfc-cn.github.io/webrtc.spec.cn)
 
 ## 翻译流程
 
