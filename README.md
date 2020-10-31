@@ -34,3 +34,4 @@ webrtc spec编辑者有3个成员:思科,谷歌,火狐.
 
 - [1.介绍](/spec/1.introduction.md)
 - [2.一致性](/spec/2.conformance.md)
+- [3.术语](/spec/3.terminology.md)
