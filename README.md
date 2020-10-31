@@ -28,7 +28,9 @@ spec目录存放对应的翻译文档,samples目录对应用于解释的一些�
 
 [webrtc spec 官方地址](https://www.w3.org/TR/webrtc/),
 本次翻译版本 20201015, 后期和[编辑者版本](https://w3c.github.io/webrtc-pc/)同步.
+翻译版本可在[github page](https://spec-rfc-cn.github.io/webrtc.spec.cn/)上查看.
 
 webrtc spec编辑者有3个成员:思科,谷歌,火狐.
 
 - [1.介绍](/spec/1.introduction.md)
+- [2.一致性](/spec/2.conformance.md)
