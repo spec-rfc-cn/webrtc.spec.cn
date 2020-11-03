@@ -173,3 +173,220 @@ permissions标准中定义.
 
 reading current permission state, 获取当前用户权限,
 request permission to use are, 询问用户.
+
+## MediaStream API
+
+### 介绍
+
+MediaStream API分两部分:MediaStreamTrack/MediaStream接口.
+MediaStreamTrack对象表示user agent中来自一个媒体source的单个类型媒体.
+MediaStream表示一组MediaStreamTrack对象,
+MediaStream可以在media element(eg:网页的video/audio元素)中录制或渲染.
+
+一个MediaStream可以包含0个或多个MediaStreamTrack,在渲染时,
+内部track需要保持同步.这点不是硬指标,因为track的时钟可能会不同.
+不同的MediaStream没必要保持同步.
+
+ps:track同步固然好,但某些场合牺牲同步也是值得的.
+特别是track是远端source或是实时流(eg:webrtc流),牺牲同步比延时累积或其他风险
+好太多了.对于实现来说,track同步最好,但在某些场景需要在同步和用户感知做取舍.
+
+一个MediaStreamTrack可以表示多通道内容,eg:立体音,立体视频(3D视频).
+通道channel的api是通过其他协议暴露的,eg:webaudio协议,不过这个不提供直接访问通道.
+
+MediaStream对象包含一个输入和一个输出,组合了所有track的输入和输出.
+输出决定了渲染(html中video的播放或录制成文件).一个MediaStream可同时
+附加到不同的输出中.
+
+一个新的MediaStream对象,可以从现有媒体stream/track中创建,
+做法是调用MediaStream()构造函数,构造函数里可以带参数,
+参数可以是已存在的MediaStream对象,或一组MediaStreamTrack对象.
+
+MediaStream/MediaStreamTrack对象都可以cloned,克隆对象的track和被克隆的对象一致.
+只是track的约束不一样,这样设计是方便适配不同的消费者.
+MeidaStream也在getUserMedia以外的场景中用到,eg:webrtc.
+
+### MediaStream
+
+构造函数是在现有track上构造一个新的stream(后面用stream指MediaStream对象).
+如上面所讲,可带两个可选参数.
+
+    [Exposed=Window]
+    interface MediaStream : EventTarget {
+      constructor();
+      constructor(MediaStream stream);
+      constructor(sequence<MediaStreamTrack> tracks);
+      readonly attribute DOMString id;
+      sequence<MediaStreamTrack> getAudioTracks();
+      sequence<MediaStreamTrack> getVideoTracks();
+      sequence<MediaStreamTrack> getTracks();
+      MediaStreamTrack? getTrackById(DOMString trackId);
+      undefined addTrack(MediaStreamTrack track);
+      undefined removeTrack(MediaStreamTrack track);
+      MediaStream clone();
+      readonly attribute boolean active;
+      attribute EventHandler onaddtrack;
+      attribute EventHandler onremovetrack;
+    };
+
+3个构造函数,一个无参,一个带MediaStream,一个带一组MeidaStreamTrack.
+
+构造函数的步骤如下:
+
+- 构造一个新的MediaStream对象叫stream
+- stream.id = 新值
+- 如果有参数,走以下流程
+  - 新建变量 tracks = 空的MediaStreamTrack集合
+    - 如果参数是MediaStream对象
+      - tracks = MediaStream对象的所有MediaStreamtrack
+    - 如果参数是一组MediaStreamTrack对象
+      - tracks = 这组MediaStreamTrack
+  - 遍历tracks
+    - 如果track已经在stream的轨道集合中,跳过
+    - 否则,将track添加到stream的轨道集合
+- 返回stream
+
+MediaStream内部会有一个轨道集合.轨道集合中的顺序由user agent定义,
+API对顺序是没有要求的.在轨道集合中查找,需要通过track.id实现.
+
+从MediaStream的输出读取数据,称为MediaStream的消费者.目前有以下消费者:
+
+- html中的媒体元素, video/audio
+- webrtc的RTCPeerConnection
+- MediaRecorder中的媒体录制
+- ImageCapture中的照片捕获
+- MediaStreamAudioSourceNode中的web aduio
+
+每个消费者都需要支持track的添加和删除.
+
+stream的active,表示至少还有一个track没有ended,
+如果stream没有track或拥有的track都是ended,那么stream就是inactive.
+
+stream的audible,表示至少有一个非ended的audio track.
+如果stream没有任何音频track,或拥有的audio track都是ended,称为inaudible.
+
+user agent可能会更新stream的轨道集合.本spec没有针对这种情况做描述,
+但其他协议可能会.webrtc 1.0 就针对这点做了描述.
+
+stream的 add a track:
+
+- 如果track已经在stream的轨道集合中,退出
+- 将track添加到stream的轨道集合
+- 在stream中触发一个addtrack的事件,参数就是track
+
+stream的 remove a track:
+
+- 如果track不在stream的轨道集合中
+- 从stream的轨道集合中移除track
+- 在stream中触发一个removetrack的事件,参数就是track
+
+MediaStream接口分析:
+继承于EventTarget,事件目标接口,3个构造函数(前面已经分析了的),
+id属性,标志stream的属性,3个获取track集合的函数,以及1个通过track id获取track集合,
+对track的增删以及对增删事件的监听,对stream的clone,最后是active状态.
+
+- id属性
+  - MediaStream构造时,由user agent生成的标志字符串
+  - 最好是用uuid,36个字符
+- active属性
+  - 表示stream是否是active状态
+- onaddtrack/onremovetrack
+  - 是事件addtrack/removetrack的事件处理
+- getAudioTracks方法
+  - 返回stream中"audio track分组"
+  - 本spec并没有指定track集合到"track分组"的转换,这个由user agent定义
+  - 本spec也没有指定两次调用要保持一致的顺序
+- getVideoTracks方法/getTracks方法
+  - 同getAudioTracks方法
+- getTrackById方法
+  - 根据track id查找,没找到就返回null
+  - 找到就返回对应的MediaStreamTrack
+- addTrack方法/removeTrack方法
+  - 具体过程如上面的add a track/ remove a track
+- clone方法
+  - 克隆stream和所有的track,具体流程如下
+  - streamClone = 新构造的MediaStream对象
+  - streamClone.id = 新uuid值
+  - 克隆每个track,并添加到streamClone的轨道集合
+  - 返回streamClone
+
+克隆每个track,下节谈到.
+
+### MediaStreamTrack
+
+在user agent上,MediaStreamTrack表示一个媒体source.
+连接到user agent的源,最常见的就是设备.
+注意,其他sepc对MediaStreamTrack的source有不同定义,或许会覆盖本
+spec定义的默认行为.同一个媒体source可以用多个track来表示,
+界面上选择同一摄像头,会导致调用两次getUserMeida,
+此时媒体source(摄像头)没有变,却包含两个不同的track.
+
+从MediaStreamTrack对象出来的数据,不一定要是规范的二进制格式.
+这样是允许user agent来维护媒体.
+
+如果source调用了stop()方法,那么MediaStreamTrack对象就不再需要了.
+不管通过什么方式,只要source的所有track被停止(be stopped或be ended),
+那么source就是stopped状态.如果source是通过getUserMeida()暴露的设备,
+当source停止时(is stopped),user agents(有时简称UA)执行以下操作;
+
+    deviceId = 设备的设备id
+    devicesLiveMap[deviceId] = false
+    获取设备类型和授权,如果不是允许,devicesAccessibleMap[deviceId] = false
+
+实现可能会对source用引用计数来跟踪source的使用,本spec不谈这点.
+
+clone a track, 上一节最后遗留的尾巴,UA会执行以下步骤:
+
+- track = 要被克隆的MediaStreamTrack对象
+- trackClone = 新构造的MediaStreamTrack对象
+- trackClone.id = 新值
+- 初始化trackClone的kind/label/readyState/enabled属性(从track复制)
+- trackClone对应的source设置成track对应的source
+- trackClone的约束(constraints)设置为track还active(活跃)的约束
+- 返回trackClone
+
+#### 生命周期和 media flow
+
+先谈生命周期.
+
+track的生命周期状态有两种:live和ended.在MediaStreamTrack构造时可指定状态,
+两种状态均可指定.eg:克隆一个ended track,状态就是ended.
+生命周期内的状态用MediaStreamTrack.readyState属性来表示.
+
+如果是live状态,表示track是active的,生成的媒体可被消费者使用.
+如果MediaStreamTrack是muted或disabled,内容会被替换成"zero-information-content".
+
+当track是muted/disabled时,要么是发送静音/黑帧,要么是"zero-information-content",
+两者是等价的.
+
+如果source是通过getUserMedia()获取的,当track被muted/disabled时,
+那和当前设备连接的所有track,会被 be muted/disabled/stopped.
+此时UA可能会将`devicesLiveMap[设备id]`设置为fasle,
+只要正在连接的track再次进行 un-muted/enabled,UA的设置会重新设回true.
+
+当一个live,unmuted,enabled的track的source来至getUserMedia(),
+当track被muted/disabled时,和当前设备连接的所有track,会被 be muted/disabled/stopped.
+(这点是重复上面的描述),此时UA应该在3秒内放弃视图继续操作设备的,
+这3秒是给用户来反应的.一旦某个连接的track再次unmuted/endabled时,
+UA应该尽快获取设备,并聚焦于"当前设置对象"的"可响应document".
+如果document没有获得焦点,UA应该在任务队列中添加一个mute任务,
+直到document获取焦点后,UA再次在任务队列添加一个unmute的任务.
+如果获取设备失败了,UA应该 end the track.(检测到设备问题,应该尽快结束相关track,
+eg:设备的物理插拔).
+
+end the track,稍后分析.
+
+track的muted/unmuted状态反映了此时此刻source是否有提供媒体.
+enabled/disabled状态是应用程序控制的,决定track是否输出媒体.
+所以如果想让媒体数据继续按flow走,那么track对象要是unmuted和enabled.
+
+当track是muted时,source暂时不能向track提供数据.
+用户可以进行muted,通常这个操作不受应用程序控制.
+UA也可以将一个track设置为muted.
+
+应用程序可以设置track的enable/disable,决定是否渲染source的媒体.
+不管track是不是enable,只要设置了muted,渲染就是黑的了.
+以消费者的角度看,track的disabled和muted是一个意思.
+但从source的角度看,两者是有区别的.
+
+### MediaStreamTrackEvent
