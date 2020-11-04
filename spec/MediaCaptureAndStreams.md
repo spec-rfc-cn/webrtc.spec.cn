@@ -540,4 +540,115 @@ live track的输出,可通过enabled属性来开和关;
 ended表示track结束了(对应的source不再提供媒体数据),这是个终止状态,
 不会再变为其他状态.
 
+#### MediaTrackSupportedConstraints
+
+轨道支持的约束,表示一个约束列表,里面的约束都是UA认可的,
+UA会利用这些约束来控制track的能力.
+这个结构体只作为函数的返回值类型,不能作为操作数.
+
+未来,spec会对这个结构体做扩展(通过添加布尔型字段).
+
+除非另有说明,本spec提到的约束只适用于通过getUserMedia()生成的track实例.
+其他规范可能有其他的说明.
+
+    dictionary MediaTrackSupportedConstraints {
+      boolean width = true;
+      boolean height = true;
+      boolean aspectRatio = true;
+      boolean frameRate = true;
+      boolean facingMode = true;
+      boolean resizeMode = true;
+      boolean sampleRate = true;
+      boolean sampleSize = true;
+      boolean echoCancellation = true;
+      boolean autoGainControl = true;
+      boolean noiseSuppression = true;
+      boolean latency = true;
+      boolean channelCount = true;
+      boolean deviceId = true;
+      boolean groupId = true;
+    };
+
+#### MediaTrackCapabilities
+
+轨道能力,表示的是track的capabilities,
+未来可能做扩展.
+
+    dictionary MediaTrackCapabilities {
+      ULongRange width;
+      ULongRange height;
+      DoubleRange aspectRatio;
+      DoubleRange frameRate;
+      sequence<DOMString> facingMode;
+      sequence<DOMString> resizeMode;
+      ULongRange sampleRate;
+      ULongRange sampleSize;
+      sequence<boolean> echoCancellation;
+      sequence<boolean> autoGainControl;
+      sequence<boolean> noiseSuppression;
+      DoubleRange latency;
+      ULongRange channelCount;
+      DOMString deviceId;
+      DOMString groupId;
+    };
+
+#### MediaTrackConstraints
+
+未来也可能做扩展
+
+    dictionary MediaTrackConstraints : MediaTrackConstraintSet {
+      sequence<MediaTrackConstraintSet> advanced;
+    };
+
+    dictionary MediaTrackConstraintSet {
+      ConstrainULong width;
+      ConstrainULong height;
+      ConstrainDouble aspectRatio;
+      ConstrainDouble frameRate;
+      ConstrainDOMString facingMode;
+      ConstrainDOMString resizeMode;
+      ConstrainULong sampleRate;
+      ConstrainULong sampleSize;
+      ConstrainBoolean echoCancellation;
+      ConstrainBoolean autoGainControl;
+      ConstrainBoolean noiseSuppression;
+      ConstrainDouble latency;
+      ConstrainULong channelCount;
+      ConstrainDOMString deviceId;
+      ConstrainDOMString groupId;
+    };
+
+要理解还要看"约束和约束集",后面分析.
+
+#### MediaTrackSettings
+
+轨道的settings,未来可能做扩展.
+
+    dictionary MediaTrackSettings {
+      long width;
+      long height;
+      double aspectRatio;
+      double frameRate;
+      DOMString facingMode;
+      DOMString resizeMode;
+      long sampleRate;
+      long sampleSize;
+      boolean echoCancellation;
+      boolean autoGainControl;
+      boolean noiseSuppression;
+      double latency;
+      long channelCount;
+      DOMString deviceId;
+      DOMString groupId;
+    };
+
+#### 可约束属性
+
+这些可约束属性分3类:音视频都能用的;音频的;视频的.
+
+音视频轨道都能用的约束.
+
+- deviceId,字符串
+  - track中生成内容的设备标识
+
 ### MediaStreamTrackEvent
