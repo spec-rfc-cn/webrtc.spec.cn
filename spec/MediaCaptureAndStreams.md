@@ -389,4 +389,60 @@ UA也可以将一个track设置为muted.
 以消费者的角度看,track的disabled和muted是一个意思.
 但从source的角度看,两者是有区别的.
 
+创建一个MediaStreamTrack对象时,默认是enabled状态
+(除非是clone才可能是disabled),且是muted状态,
+这个状态反映了track创建时,source是muted状态.
+
+track的end表示track对应的source已经断开连接(disconnected),
+或是枯竭了(exhausted).
+
+如果一个source的所有track都是ended状态,那么称source是stopped.
+track的ended状态是什么:不管什么原因,当track对象结束时,就称为ended.
+这里的原因有很多,eg:用户取消申请授权;应用程序调用了track.stop()方法;
+或者UA指示结束track,等等.
+
+不管track因何种原因end,都会调用stop()方法,UA会创建如下事件:
+
+- 如果track.readyState == ended, 退出
+- track.readyState = ended
+- 通知track对应的source:"track已经ended"
+  - 如果source没有其他MediaStreamTrack,source可能切换到stopped状态
+- 在track对象上触发一个ended事件
+
+如果是用户请求来结束track,那么事件源就是"用户交互事件源".
+
+谈谈media flow.
+
+对于一个live的track,影响media flow的两个因素是muted/disabled.
+
+muted说的是source是否提供媒体,也就是track的输入,
+如果track不再受到样本时,就意味muted.
+
+muted不由应用程序控制,但应用程序可以观察到这个值,
+直接读muted属性,或监听mute/unmute事件.
+track被静音(be muted)的原因可能有很多:
+
+- 麦克风设备上的静音按钮被按下
+- 对于笔记本自带的摄像头,笔记本盖子被关闭
+- 在操作系统上切换控制
+- chrome浏览器行点击了静音按钮
+- UA静音等
+
+无论何时UA引起静音,都会通过"用户交互任务源"发布一个任务,
+这个任务的目的是按用户需求调整track的muted状态.
+
+set a track's muted state,修改muted状态,UA会执行以下步骤:
+
+- track = 要改变muted状态的track
+- 如果track.muted == newState(要修改的状态),退出
+- track.muted = newState
+- 如果newState == true, eventNmae = mute;否则eventNmae = unmute
+- 在track出发一个事件(事件名叫eventName)
+
+enabled/disabled是可以由应用程序控制的,通过修改track.enabled属性.
+
+对于消费者来说,muted/disabled都是一样的,最后会得到"zero-information-content",
+没有声音没有画面.
+总结一句:只有track处于unmuted和enabled时,媒体才会从source走到track,这是flow.
+
 ### MediaStreamTrackEvent
