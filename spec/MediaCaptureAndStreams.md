@@ -457,5 +457,87 @@ ConstrainablePattern接口中定义的api允许对track上的约束进行检索�
 这个列表叫"固定的可约束轨道属性列表",列表中包含 devicedId,facingMode,groupId,
 这几个属性会在"约束模型"中详细描述到.
 
+#### MediaStreamTrack接口
+
+webidl如下:
+
+    [Exposed=Window]
+    interface MediaStreamTrack : EventTarget {
+      readonly attribute DOMString kind;
+      readonly attribute DOMString id;
+      readonly attribute DOMString label;
+      attribute boolean enabled;
+      readonly attribute boolean muted;
+      attribute EventHandler onmute;
+      attribute EventHandler onunmute;
+      readonly attribute MediaStreamTrackState readyState;
+      attribute EventHandler onended;
+      MediaStreamTrack clone();
+      undefined stop();
+      MediaTrackCapabilities getCapabilities();
+      MediaTrackConstraints getConstraints();
+      MediaTrackSettings getSettings();
+      Promise<undefined> applyConstraints(optional MediaTrackConstraints constraints = {});
+    };
+
+下面具体解释一下属性和方法.
+
+- kind属性,字符串
+  - 表示轨道类型,要么是"video",要么是"audio"
+- id属性,字符串
+  - track构造时生成,用于标识track
+  - 本spec规定,这个id要么由UA指定,要么由算法指定(类似MediaStrea.id,用uuid)
+  - webrtc spec规定,这个id由UA指定,且不与其他轨道id一样
+- label属性,字符串
+  - UA对音视频源做的标签,eg:网络麦克风/USB摄像头
+  - 标签是从相关的源得来的,如果源没有标签,就是空字符串
+- enabled属性,布尔型
+  - 表示track的enabled状态
+  - 获取时,是获取最后一次设置的值
+  - 设置时,要设置新值
+  - 当track是ended(结束)时,还是可以设置enabled值,只是不会有具体的处理逻辑
+- muted属性,布尔型
+  - 表示track的muted状态
+- onmute/onunmute/onended属性,事件处理
+  - 用于处理mute/unmute/ended事件
+- ready属性,只读
+  - track的生命周期状态 live/ended
+  - 获取时,返回UA最后设置的值
+- clone方法
+  - 克隆当前track
+  - 调用clone()时,返回clone a track的结果(上面分析过这个过程)
+- stop方法
+  - UA具体处理如下
+  - track = 当前轨道
+  - 如果track.readyState == ended,退出
+  - 通知对应的source: track结束了
+    - 如果source没有其他track,可能会触发source的stopped
+  - track.readyState == ended
+- getCapabilities方法
+  - 返回source的capabilities
+  - 具体细节需要查看 ConstrainablePattern接口
+  - 这个方法会获取设备的持久跨源信息
+- getConstraints方法
+  - 具体细节需要查看 ConstrainablePattern接口
+- getSettings方法
+  - UA具体处理如下
+  - track = 当前轨道
+  - 如果track.readyState == ended,执行以下操作
+    - settings = 新构造一个MediaStrackSettings对象
+    - 用"list of inherent constrainable track properties"里的值填充settings
+    - 返回settings
+  - 返回 ConstrainablePattern接口获取的此track对应的当前settings
+- applyConstraints方法
+  - UA具体处理如下
+  - track = 当前轨道
+  - 如果track.readyState == ended,执行以下操作
+    - 构造一个undefined的promise,并返回
+  - 调用"约束模型"中的多种算法,具体后面再分析
+
+关于track生命周期状态,用了一个枚举类型 MediaStreamTrackState,
+live表示track是活跃的(对应的source在实时尽最大可能提供媒体数据).
+live track的输出,可通过enabled属性来开和关;
+ended表示track结束了(对应的source不再提供媒体数据),这是个终止状态,
+不会再变为其他状态.
 
 ### MediaStreamTrackEvent
