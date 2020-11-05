@@ -552,21 +552,21 @@ UA会利用这些约束来控制track的能力.
 其他规范可能有其他的说明.
 
     dictionary MediaTrackSupportedConstraints {
-      boolean width = true;
-      boolean height = true;
-      boolean aspectRatio = true;
-      boolean frameRate = true;
-      boolean facingMode = true;
-      boolean resizeMode = true;
-      boolean sampleRate = true;
-      boolean sampleSize = true;
-      boolean echoCancellation = true;
-      boolean autoGainControl = true;
-      boolean noiseSuppression = true;
-      boolean latency = true;
-      boolean channelCount = true;
-      boolean deviceId = true;
-      boolean groupId = true;
+      boolean width = true;                // 宽
+      boolean height = true;               // 高
+      boolean aspectRatio = true;          // 宽高比
+      boolean frameRate = true;            // 帧率
+      boolean facingMode = true;           // 面向模式
+      boolean resizeMode = true;           // 缩放模式
+      boolean sampleRate = true;           // 采样率
+      boolean sampleSize = true;           // 采样大小
+      boolean echoCancellation = true;     // 回声消除
+      boolean autoGainControl = true;      // 自动增益控制
+      boolean noiseSuppression = true;     // 噪声抑制
+      boolean latency = true;              // 延时
+      boolean channelCount = true;         // 声道数
+      boolean deviceId = true;             // 设备id
+      boolean groupId = true;              // 分组id
     };
 
 #### MediaTrackCapabilities
@@ -575,21 +575,21 @@ UA会利用这些约束来控制track的能力.
 未来可能做扩展.
 
     dictionary MediaTrackCapabilities {
-      ULongRange width;
-      ULongRange height;
-      DoubleRange aspectRatio;
-      DoubleRange frameRate;
-      sequence<DOMString> facingMode;
-      sequence<DOMString> resizeMode;
-      ULongRange sampleRate;
-      ULongRange sampleSize;
-      sequence<boolean> echoCancellation;
-      sequence<boolean> autoGainControl;
-      sequence<boolean> noiseSuppression;
-      DoubleRange latency;
-      ULongRange channelCount;
-      DOMString deviceId;
-      DOMString groupId;
+      ULongRange width;                     // 宽 范围
+      ULongRange height;                    // 高 范围
+      DoubleRange aspectRatio;              // 宽高比 范围
+      DoubleRange frameRate;                // 帧率 范围
+      sequence<DOMString> facingMode;       // 面向模式 列表
+      sequence<DOMString> resizeMode;       // 缩放模式 列表
+      ULongRange sampleRate;                // 采样率
+      ULongRange sampleSize;                // 采样大小
+      sequence<boolean> echoCancellation;   // 回声消除 列表
+      sequence<boolean> autoGainControl;    // 自动增益控制 列表
+      sequence<boolean> noiseSuppression;   // 噪声抑制 列表
+      DoubleRange latency;                  // 延时 范围
+      ULongRange channelCount;              // 声道数 范围
+      DOMString deviceId;                   // 设备id
+      DOMString groupId;                    // 分组id
     };
 
 #### MediaTrackConstraints
@@ -601,21 +601,21 @@ UA会利用这些约束来控制track的能力.
     };
 
     dictionary MediaTrackConstraintSet {
-      ConstrainULong width;
-      ConstrainULong height;
-      ConstrainDouble aspectRatio;
-      ConstrainDouble frameRate;
-      ConstrainDOMString facingMode;
-      ConstrainDOMString resizeMode;
-      ConstrainULong sampleRate;
-      ConstrainULong sampleSize;
-      ConstrainBoolean echoCancellation;
-      ConstrainBoolean autoGainControl;
-      ConstrainBoolean noiseSuppression;
-      ConstrainDouble latency;
-      ConstrainULong channelCount;
-      ConstrainDOMString deviceId;
-      ConstrainDOMString groupId;
+      ConstrainULong width;                  // 宽
+      ConstrainULong height;                 // 高
+      ConstrainDouble aspectRatio;           // 宽高比
+      ConstrainDouble frameRate;             // 帧率
+      ConstrainDOMString facingMode;         // 面向模式
+      ConstrainDOMString resizeMode;         // 缩放模式
+      ConstrainULong sampleRate;             // 采样率
+      ConstrainULong sampleSize;             // 采样大小
+      ConstrainBoolean echoCancellation;     // 回声消除
+      ConstrainBoolean autoGainControl;      // 自动增益控制
+      ConstrainBoolean noiseSuppression;     // 噪声抑制
+      ConstrainDouble latency;               // 延时
+      ConstrainULong channelCount;           // 声道数
+      ConstrainDOMString deviceId;           // 设备id
+      ConstrainDOMString groupId;            // 分组id
     };
 
 要理解还要看"约束和约束集",后面分析.
@@ -625,21 +625,21 @@ UA会利用这些约束来控制track的能力.
 轨道的settings,未来可能做扩展.
 
     dictionary MediaTrackSettings {
-      long width;
-      long height;
-      double aspectRatio;
-      double frameRate;
-      DOMString facingMode;
-      DOMString resizeMode;
-      long sampleRate;
-      long sampleSize;
-      boolean echoCancellation;
-      boolean autoGainControl;
-      boolean noiseSuppression;
-      double latency;
-      long channelCount;
-      DOMString deviceId;
-      DOMString groupId;
+      long width;                            // 宽
+      long height;                           // 高
+      double aspectRatio;                    // 宽高比
+      double frameRate;                      // 帧率
+      DOMString facingMode;                  // 面向模式
+      DOMString resizeMode;                  // 缩放模式
+      long sampleRate;                       // 采样率
+      long sampleSize;                       // 采样大小
+      boolean echoCancellation;              // 回声消除
+      boolean autoGainControl;               // 自动增益控制
+      boolean noiseSuppression;              // 噪声抑制
+      double latency;                        // 延时
+      long channelCount;                     // 声道数
+      DOMString deviceId;                    // 设备id
+      DOMString groupId;                     // 分组id
     };
 
 #### 可约束属性
@@ -649,6 +649,83 @@ UA会利用这些约束来控制track的能力.
 音视频轨道都能用的约束.
 
 - deviceId,字符串
-  - track中生成内容的设备标识
+  - track中生成内容的设备的标识
+  - 符合MediaDeviceInfo.deviceId的定义
+  - 这个属性只由附加到track的source决定的
+  - getCapabilities()对于deviceId只会返回一个值
+  - 所以这个属性可以用在getUserMedia()中,进行初始化媒体选择
+  - 这个属性对使用applyConstraints()进行后续的媒体控制没有帮助
+    - 因为试图设置不同的设备id值,会导致约束集不满足
+  - 如果在getUserMedia()中的deviceId为空字符串,等同于没有指定设备id
+- groupId,字符串
+  - 生成内容的设备的分组,在document中是唯一的
+  - 符合MediaDeviceInfo.groupId的定义
+  - 这个属性只由附加到track的source决定的
+  - getCapabilities()对于groupId只会返回一个值
+  - 不同的浏览会话中,这个值不是stable的(可能会变)
+  - getUserMedia()初始化媒体选择时,这个值用处不大
+  - 这个属性对使用applyConstraints()进行后续的媒体控制没有帮助
+    - 因为试图设置不同的分组id值,会导致约束集不满足
+
+deviceId和groupId是音视频都能用上的约束.下面是适用于视频的约束属性.
+
+- width/height, 无符号长整形
+  - 宽度/高度或宽度/高度范围,单位pixel(像素),是capability
+- frameRate, double
+  - 帧率/帧率范围
+  - 如果没有设置帧率,那么会和UA的垂直同步显示帧率一致
+  - 没有设置帧率的情况:要么source原生不提供帧率,要么从stream无法获取帧率
+- aspectRatio,double
+  - 宽高比/宽高比范围
+  - width像素/height像素,四舍五入,小数位保持10位
+- facingMode,字符串
+  - VideoFacingModeEnum枚举
+  - 从用户角度看,是相机的方向
+  - getConstraints()返回的字符串可能和枚举字符串不是完全一致
+  - 未来可能做扩展
+- resizeMode,字符串
+  - VideoResizeModeEnum枚举
+  - UA指定的分辨率,基于这个值,对摄像头的输出进行裁剪和下采样
+  - 当摄像头同时在其他浏览会话中使用,且当前会话的resizeMode==none时
+    - UA可能会进行裁剪和下采样来模拟其他分辨率
+  - getConstraints()返回的字符串可能和枚举字符串不是完全一致
+  - 未来可能做扩展
+
+    enum VideoFacingModeEnum {
+      "user",         // 相机对着用户
+      "environment",  // 相机背对着用户(用户和相机朝着同一方向)
+      "left",         // 相机在用户左侧
+      "right"         // 相机在用户右侧
+    };
+
+    enum VideoResizeModeEnum {
+      "none", // 分辨率由摄像头/驱动/OS提供;其他浏览会话也在使用,UA可进行模拟
+      "crop-and-scale" // UA会进行裁剪和下采样,不能放大拉伸,数据要来至source input
+    };
+
+下面是只适用于音频的约束:
+
+- sampleRate,无符号长整形
+  - 音频采样率
+- sampleSzie,无符号长整形
+  - 线性样本大小,前提是音频设备能提供线性样本大小
+- echoCancellation,布尔型
+  - EC,麦克风回声消除,多数情况下要消除
+  - 应用程序可以控制此行为
+- autioGainControl,布尔型
+  - AGC,麦克风自动增益控制,关闭表示不修改音频
+  - 应用程序可以控制此行为
+- noiseSuppression,布尔型
+  - NS,噪声抑制
+  - 应用程序可以控制此行为
+- latency,double
+  - 延时/延时范围,单位秒
+  - 初始处理到下一个处理之间的时间
+  - eg:声音产生到下一个处理之间的时间差就是延时
+  - 很多程序将低延时作为核心指标
+  - 高延时程序中,是牺牲延时换取其他指标的优秀
+  - 这个值是预期延时,实际延时可能会有不同
+- channelCount,无符号长整形
+  - 声道数
 
 ### MediaStreamTrackEvent
