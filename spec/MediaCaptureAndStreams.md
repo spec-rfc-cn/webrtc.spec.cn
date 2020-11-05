@@ -752,3 +752,111 @@ track字段设置为轨道track,分派到指定的事件目标上.
 
 这段里,需要注意的是:UA导致stream的媒体集发送变化时,
 addtrack/removetrack事件会触发.
+
+## 模型: source,sink,constraint,setting
+
+`这个章节是非规范的`
+
+从source到sink,浏览器提供了一个媒体管道(media pipeline).
+在浏览器中,sink就是img/video/audio等标签.
+传统的source包括流内容/文件/web资源.
+这些source提供的媒体不会中途改变,这类source可以理解为静态的.
+
+通过sink可以将source提供的媒体呈现给用户,sink有很多控件来管理source的内容.
+
+还有些动态source,eg:摄像头/麦克风,通过getUserMedia()可以访问,
+动态source的特征是可依据应用程序的需求而改变媒体内容.
+eg:video标签显示动态source,可以执行缩放,或者通知source提供更合适的媒体.
+
+ps:这种反向通知source的方式是一个小优化,收益却很高,
+这种优化可以省电,也允许更小的网络拥塞.
+
+stream的sink(video/audio标签,或是RTCPeerConnection),接收者,
+还有进一步媒体转换的机制,超出了本spec对setting/capabilities/constraint的描述.
+
+对track约束的变更和应用,可能会影响相应source所连的所有轨道的settings值,
+也会影响使用source的所有下级sink.有些sink对这种变更很包容,
+eg:video标签和RTCPeerConnectin;也有一些sink对变更的容忍度很小,
+eg:Recorder API,几乎只要有变更就会导致录制失败.
+
+RTCPeerConnection是一个有趣的sink,同时也作为网络流的source.
+作为sink,她有转码能力(降低码率/分辨率缩放/调整帧率);
+作为source,可通过track来修改setting.
+
+下面来看几个约束如何影响source和track的场景.
+以下几个场景的约束是分辨率,但其他约束也是同样的规则.
+
+### 无约束场景
+
+客户端有个source,分辨率是800x600,还有3个stream,
+stream内部的track都使用相同的deviceId,
+3个stream分别连着3个接收者sink:
+sink1,video标签,分辨率是1920x1200;
+sink2,video标签,分辨率是320x200;
+sink3,RTCPeerConnection,本地pc(RTCPeerConnection的实例)连接着远端pc,
+远端pc连着两个stream(stream连着video标签,分辨率一个是150x100,另一个是1024x768).
+
+整个连接的图如下:
+
+- source 800x600
+  - sink1(video) 1920x1200
+  - sink2(video) 320x200
+  - sink3(RTCPeerConnectin)
+
+sink3还有一个对应的远端pc
+
+- 远端pc
+  - sink4(video) 150x100
+  - sink5(video) 1024x768
+
+此时的情况是:
+
+- source输出的是 800x600
+- sink1 收到媒体后进行了放大
+- sink2 收到媒体后进行了缩小
+- sink3随远端pc,也就是 1024x768
+- sink4 进行了缩小
+- sink5 没有进行缩放
+
+### 给某个轨道添加约束
+
+这里说的轨道是指和source相连的,属于stream的track.
+
+一旦调用applyConstraints()来设置约束,source会里面受到影响,
+相连的track和sink也会收到影响,但远端的sink是不会受到影响.
+
+如果对source添加如下约束:分辨率提高为1920x1200.
+
+- source输出的是 ~~800x600~~1920x1200
+- sink1 ~~收到媒体后进行了放大~~(没有进行缩放)
+- sink2 ~~收到媒体后进行了缩小~~(大幅缩小)
+- sink3随远端pc,也就是 1024x768(输出不变,输入由以前的800x600变为1920x1200)
+- sink4 进行了缩小(不受影响)
+- sink5 没有进行缩放(不受影响)
+
+同样,在远端添加约束也会影响到sink3(也就是本地RTCPeerConnection),
+这样会影响到远端的sink4和sink5,也有可能导致本地pc的重新协商.
+同时,这么做,不会对sink1/sink2/source有所影响.
+
+本spec并未定义机制来确保sink3改变时自动影响source.
+具体实现可以做一些优化达到此目的.
+
+总结:改变source会影响sink消费者.
+某些场景下,实现会通过sink的改变来触发改变source.看下个示例.
+
+### 通过sink的变更来修改source
+
+还是接着上个例子,source输出的是1920x1200,source是无约束的.
+sink1还是1920x1200,sink2还是320x200.
+
+此时的情况是sink1需要的分辨率从1920x1200变为了1024x768.
+浏览器的media pipeline会立马意识到:source不需要再提供高分辨率了,
+source降低分辨率,可以同时减少source和sink1的工作.
+只要source没有什么强制约束,media pipeline就可能修改source的分辨率,
+最后将source的分辨率改为1024x768.
+
+这个优化在很多sink上都会出现.
+
+值得一提的是:applyConstraints()去设置约束时,是有可能不成功的,
+要么是因为source本身不满足约束,要么是新加的约束和之前的约束有冲突.
+一旦出现这种情况,applyConstraints()就会返回拒绝rejected,并不会应用任何新约束.
