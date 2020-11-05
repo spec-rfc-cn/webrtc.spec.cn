@@ -860,3 +860,29 @@ source降低分辨率,可以同时减少source和sink1的工作.
 值得一提的是:applyConstraints()去设置约束时,是有可能不成功的,
 要么是因为source本身不满足约束,要么是新加的约束和之前的约束有冲突.
 一旦出现这种情况,applyConstraints()就会返回拒绝rejected,并不会应用任何新约束.
+
+## 媒体元素中的MediaStream
+
+html中的媒体元素是video/audio标签.接下来用video/audio标签来代替媒体元素.
+
+MediaStream可以直接赋值给video/audio标签.
+
+MediaStream不能预加载,不能seek.简单,无限潜力,线性的时间轴.
+时间轴从0开始,只要video/audio标签在播放,时间轴就一直线性增加,
+当MediaStream暂停时,时间轴不再增加.
+
+HTML中定义的HTMLMediaElement的srcObject属性,UA需要支持,
+同时要支持播放MediaStream对象.
+
+HTML文档还描述了HTMLMediaElement和"媒体提供对象"的协作,
+当"媒体提供对象"是一个MediaStream时,要执行以下规则:
+
+- 不管何时创建AudioTrack/VideoTrack
+  - id/label属性都要用MediaStreamTrack的相关属性来初始化
+  - kind属性初始化为"main"
+  - language属性初始化为""
+- UA应该直接播放从MediaStream获得的数据,而不进行缓存
+- MediaStream中的轨道集是没有排序的
+  - 同理,AudioTrackList/VideoTrackList也没有排序需求
+- 对于video标签,回放结束(ended playback)是指
+  - video.readyState 大于等于 HAVE_METADATA
