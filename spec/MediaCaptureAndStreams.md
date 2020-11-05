@@ -729,3 +729,26 @@ deviceId和groupId是音视频都能用上的约束.下面是适用于视频的�
   - 声道数
 
 ### MediaStreamTrackEvent
+
+轨道事件,不是MediaStreamTrack定义中的事件,
+MediaStreamTrackEvent作为和MediaStream/MediaStreamTrack同等级暴露的接口,
+只有两个事件实现了这个接口:addtrack/removetrack.
+
+addtrack/removetrack是UA变更stream的轨道集合时触发.
+
+"Firing a track event named e",意思是事件e,对应的轨道是track,
+事件e不冒泡(先祖元素不被触发),不可取消,将MediaStreamTrackEvent接口的
+track字段设置为轨道track,分派到指定的事件目标上.
+
+    [Exposed=Window]
+    interface MediaStreamTrackEvent : Event {
+      constructor(DOMString type, MediaStreamTrackEventInit eventInitDict);
+      [SameObject] readonly attribute MediaStreamTrack track;
+    };
+
+    dictionary MediaStreamTrackEventInit : EventInit {
+      required MediaStreamTrack track;
+    };
+
+这段里,需要注意的是:UA导致stream的媒体集发送变化时,
+addtrack/removetrack事件会触发.
