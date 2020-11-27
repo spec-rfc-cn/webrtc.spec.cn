@@ -884,5 +884,80 @@ HTML文档还描述了HTMLMediaElement和"媒体提供对象"的协作,
 - UA应该直接播放从MediaStream获得的数据,而不进行缓存
 - MediaStream中的轨道集是没有排序的
   - 同理,AudioTrackList/VideoTrackList也没有排序需求
-- 对于video标签,回放结束(ended playback)是指
-  - video.readyState 大于等于 HAVE_METADATA
+- 对于video标签(HTMLVideoElement),回放结束(ended playback)是指
+  - video.readyState 大于等于 HAVE_METADATA (具体看稍后的解释),且下面两个条件满足之一
+		- MediaStream的状态之前是active,现在是inactive
+		- MediaStream的autoplay是false,调用play()之后,状态依次是active/inactive/active
+- 对于audio标签(HTMLAudioElement),流程和上面的video类似,MediaStream的状态是audible/inaudible
+- 媒体元素上的fastSeek()调用都会被忽略掉
+
+html对回放状态的定义:
+
+html的媒体元素有一个ready状态,该状态表示渲染时当前回放位置,
+什么叫当前回放位置:媒体元素的一个参数,初始化为0秒,
+她表示media timeline中的一个时间点.
+什么叫media timeline:media resource的一个属性,
+meida resource表示完整媒体数据集,是一个术语,就叫媒体资源.
+媒体时间轴(media timeline)就是媒体资源中的时间映射为位置.
+说回来,ready到底是什么:时间轴上渲染的时间点.有以下几个值:
+
+- HAVE_NOTHING,0
+	- 还没有媒体资源的相关信息
+	- 当前回放位置没有媒体数据
+	- 如果媒体元素的networkState属性是NETWORK_EMPTY,那么ready就是这个状态
+- HAVE_METADATA,1
+	- 有足够的媒体资源,如果是video,都可以获取分辨率了
+	- 当前回放位置没有媒体数据
+- HAVE_CURRENT_DATA,2
+	- 当前回放位置有媒体数据
+	- 要么继续播放没有足够数据,要么是向前跳了之后没足够的数据(不是回退的那种)
+	- 如果是video,表示当前帧的数据有,下一帧的数据没有
+	- 如果当前帧就是最后一帧,回放就结束了(playback has ended)
+- HAVE_FUTURE_DATA,3
+	- 当前回放位置有媒体数据
+	- 向前跳,或继续播放都有数据,而且这些数据已经缓存好了
+	- 此状态下的播放过程,不会进入到"回放结束"
+- HAVE_ENOUGH_DATA,4
+	- 满足HAVE_FUTURE_DATA的条件,而且下面两个条件也是成立的
+		- ua估计,从当前回放位置开始,以一定速度的数据都有了,至少在播放到结尾,数据都够
+		- ua等待更多的时间也不会获取更多的数据,此时延时播放没有意义(eg:缓冲满的情况)
+
+ready的几种状态是可以相关转换的.
+
+总的来说,媒体元素和MediaStream是有些组合的,限制也蛮多,具体见以下的表格:
+
+媒体元素属性 | 属性的类型 | 数据源是媒体流时,获取设置的行为 | 限制
+---|---|---|---|---
+preload|string|get:空;set:忽略|媒体流时不能预加载的
+buffered|时间范围|buffered.length为0|媒体流不能预加载,也不能缓存
+currentTime|double|非负整数.初始化为0,播放时会实时线性增加|单位秒,无法修改
+seeking|bool|false|无法缓存就无法时移
+defaultPlaybackRate|double|set:忽略;get:1.0|无法修改,无法时移就表示无法快放或慢放,ratechange事件也无法触发
+palybackRate
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
